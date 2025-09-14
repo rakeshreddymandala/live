@@ -12,6 +12,18 @@ function ReadyPlayerMeAvatar({ analyser, isPlaying }) {
   // Load the ReadyPlayerMe model
   const { scene, nodes, materials } = useGLTF('https://models.readyplayer.me/68c6d8096e1393f19468b39e.glb');
 
+  // Debug: Log available morph targets once
+  useEffect(() => {
+    if (scene) {
+      console.log('Available morph targets:');
+      scene.traverse((child) => {
+        if (child.isMesh && child.morphTargetDictionary) {
+          console.log('Mesh:', child.name, 'Morph targets:', Object.keys(child.morphTargetDictionary));
+        }
+      });
+    }
+  }, [scene]);
+
   useFrame((state) => {
     // Audio-reactive mouth animation
     if (isPlaying && analyser) {
@@ -146,7 +158,7 @@ export default function Avatar({ audioRef, isPlaying, setIsPlaying }) {
   return (
     <div style={{ width: '100%', height: '100%' }}>
       <Canvas 
-        camera={{ position: [0, 1.5, 2.2], fov: 28 }}
+        camera={{ position: [0, 2.8, 2.2], fov: 28 }}
         style={{ width: '100%', height: '100%' }}
       >
         <ambientLight intensity={0.6} />
