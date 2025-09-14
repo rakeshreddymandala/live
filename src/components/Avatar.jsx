@@ -25,39 +25,99 @@ function ReadyPlayerMeAvatar({ analyser, isPlaying }) {
   }, [scene]);
 
   useFrame((state) => {
-    // Audio-reactive mouth animation
+    // Enhanced professional audio-reactive mouth animation
     if (isPlaying && analyser) {
       const dataArray = new Uint8Array(analyser.frequencyBinCount);
       analyser.getByteFrequencyData(dataArray);
       
-      const speechRange = dataArray.slice(5, 50);
-      const avg = speechRange.reduce((a, b) => a + b, 0) / speechRange.length;
-      const normalizedVolume = Math.min(avg / 128, 1);
+      // Multiple frequency ranges for more accurate lip-sync
+      const lowFreq = dataArray.slice(1, 8);   // Low frequencies (vowels)
+      const midFreq = dataArray.slice(8, 25);  // Mid frequencies (consonants)
+      const highFreq = dataArray.slice(25, 50); // High frequencies (sibilants)
       
-      setMouthOpen(normalizedVolume * 0.8);
+      const lowAvg = lowFreq.reduce((a, b) => a + b, 0) / lowFreq.length;
+      const midAvg = midFreq.reduce((a, b) => a + b, 0) / midFreq.length;
+      const highAvg = highFreq.reduce((a, b) => a + b, 0) / highFreq.length;
+      
+      // Normalize each frequency range
+      const lowNorm = Math.min(lowAvg / 255, 1);
+      const midNorm = Math.min(midAvg / 255, 1);
+      const highNorm = Math.min(highAvg / 255, 1);
+      
+      // Calculate different mouth shapes based on frequency content
+      const vowelMouth = lowNorm * 0.8;        // Open mouth for vowels
+      const consonantMouth = midNorm * 0.4;    // Smaller opening for consonants
+      const sibilantMouth = highNorm * 0.2;    // Tight mouth for s/sh sounds
+      
+      // Combine for natural mouth movement
+      const combinedMouth = Math.max(vowelMouth, consonantMouth, sibilantMouth);
+      
+      // Smooth the animation with interpolation
+      const currentMouth = mouthOpen;
+      const smoothedMouth = currentMouth + (combinedMouth - currentMouth) * 0.25;
+      
+      setMouthOpen(Math.max(0, Math.min(1, smoothedMouth)));
     } else {
-      // Test animation when not playing audio
+      // Improved test animation when not playing audio
       const time = state.clock.elapsedTime;
-      const testMouth = Math.sin(time * 2) * 0.2 + 0.2;
+      const naturalSpeech = Math.sin(time * 3) * 0.3 + 
+                           Math.sin(time * 7) * 0.1 + 
+                           Math.sin(time * 11) * 0.05;
+      const testMouth = Math.max(0, naturalSpeech * 0.5 + 0.2);
       setMouthOpen(testMouth);
     }
 
-    // Apply mouth animation to morph targets if available
+    // Enhanced morph target application with better mapping
     if (scene) {
       scene.traverse((child) => {
         if (child.isMesh && child.morphTargetInfluences) {
-          // Common ReadyPlayerMe morph target names for mouth
           const morphTargetNames = child.morphTargetDictionary;
           if (morphTargetNames) {
-            // Try common mouth morph targets
+            // More comprehensive morph target mapping
+            const mouthIntensity = mouthOpen;
+            
+            // Primary mouth movements
             if ('mouthOpen' in morphTargetNames) {
-              child.morphTargetInfluences[morphTargetNames['mouthOpen']] = mouthOpen;
+              child.morphTargetInfluences[morphTargetNames['mouthOpen']] = mouthIntensity * 0.9;
             }
             if ('jawOpen' in morphTargetNames) {
-              child.morphTargetInfluences[morphTargetNames['jawOpen']] = mouthOpen * 0.5;
+              child.morphTargetInfluences[morphTargetNames['jawOpen']] = mouthIntensity * 0.7;
             }
+            
+            // Vowel shapes
             if ('viseme_aa' in morphTargetNames) {
-              child.morphTargetInfluences[morphTargetNames['viseme_aa']] = mouthOpen * 0.3;
+              child.morphTargetInfluences[morphTargetNames['viseme_aa']] = mouthIntensity * 0.5;
+            }
+            if ('viseme_E' in morphTargetNames) {
+              child.morphTargetInfluences[morphTargetNames['viseme_E']] = mouthIntensity * 0.3;
+            }
+            if ('viseme_I' in morphTargetNames) {
+              child.morphTargetInfluences[morphTargetNames['viseme_I']] = mouthIntensity * 0.2;
+            }
+            if ('viseme_O' in morphTargetNames) {
+              child.morphTargetInfluences[morphTargetNames['viseme_O']] = mouthIntensity * 0.4;
+            }
+            if ('viseme_U' in morphTargetNames) {
+              child.morphTargetInfluences[morphTargetNames['viseme_U']] = mouthIntensity * 0.3;
+            }
+            
+            // Consonant shapes
+            if ('viseme_PP' in morphTargetNames) {
+              child.morphTargetInfluences[morphTargetNames['viseme_PP']] = mouthIntensity * 0.1;
+            }
+            if ('viseme_FF' in morphTargetNames) {
+              child.morphTargetInfluences[morphTargetNames['viseme_FF']] = mouthIntensity * 0.15;
+            }
+            if ('viseme_TH' in morphTargetNames) {
+              child.morphTargetInfluences[morphTargetNames['viseme_TH']] = mouthIntensity * 0.1;
+            }
+            
+            // Mouth corner movements for more expression
+            if ('mouthSmileLeft' in morphTargetNames) {
+              child.morphTargetInfluences[morphTargetNames['mouthSmileLeft']] = mouthIntensity * 0.1;
+            }
+            if ('mouthSmileRight' in morphTargetNames) {
+              child.morphTargetInfluences[morphTargetNames['mouthSmileRight']] = mouthIntensity * 0.1;
             }
           }
         }
@@ -120,8 +180,11 @@ export default function Avatar({ audioRef, isPlaying, setIsPlaying }) {
       if (!audioCtxRef.current) {
         audioCtxRef.current = new (window.AudioContext || window.webkitAudioContext)();
         analyserRef.current = audioCtxRef.current.createAnalyser();
-        analyserRef.current.fftSize = 256;
-        analyserRef.current.smoothingTimeConstant = 0.8;
+        // Enhanced analyser settings for better lip-sync
+        analyserRef.current.fftSize = 512;  // Higher resolution
+        analyserRef.current.smoothingTimeConstant = 0.6; // Less smoothing for responsiveness
+        analyserRef.current.minDecibels = -90;
+        analyserRef.current.maxDecibels = -10;
       }
       
       if (isPlaying && audioRef.current.src && !sourceRef.current) {
