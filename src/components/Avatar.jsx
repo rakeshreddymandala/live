@@ -1,16 +1,16 @@
 // src/components/Avatar.jsx
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, Suspense } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
-import { OrbitControls } from '@react-three/drei';
+import { OrbitControls, useGLTF } from '@react-three/drei';
 
-function TalkingHead({ analyser, isPlaying }) {
-  const headRef = useRef();
-  const mouthRef = useRef();
-  const leftEyeRef = useRef();
-  const rightEyeRef = useRef();
+function ReadyPlayerMeAvatar({ analyser, isPlaying }) {
+  const gltfRef = useRef();
   const [mouthOpen, setMouthOpen] = useState(0);
   const [eyeBlink, setEyeBlink] = useState(1);
   const blinkTimerRef = useRef(0);
+
+  // Load the ReadyPlayerMe model
+  const { scene, nodes, materials } = useGLTF('https://models.readyplayer.me/68c6d8096e1393f19468b39e.glb');
 
   useFrame((state) => {
     // Audio-reactive mouth animation
@@ -30,10 +30,26 @@ function TalkingHead({ analyser, isPlaying }) {
       setMouthOpen(testMouth);
     }
 
-    // Mouth animation
-    if (mouthRef.current) {
-      mouthRef.current.scale.y = 0.3 + mouthOpen * 0.7;
-      mouthRef.current.scale.x = 1 + mouthOpen * 0.2;
+    // Apply mouth animation to morph targets if available
+    if (scene) {
+      scene.traverse((child) => {
+        if (child.isMesh && child.morphTargetInfluences) {
+          // Common ReadyPlayerMe morph target names for mouth
+          const morphTargetNames = child.morphTargetDictionary;
+          if (morphTargetNames) {
+            // Try common mouth morph targets
+            if ('mouthOpen' in morphTargetNames) {
+              child.morphTargetInfluences[morphTargetNames['mouthOpen']] = mouthOpen;
+            }
+            if ('jawOpen' in morphTargetNames) {
+              child.morphTargetInfluences[morphTargetNames['jawOpen']] = mouthOpen * 0.5;
+            }
+            if ('viseme_aa' in morphTargetNames) {
+              child.morphTargetInfluences[morphTargetNames['viseme_aa']] = mouthOpen * 0.3;
+            }
+          }
+        }
+      });
     }
 
     // Eye blinking
@@ -44,77 +60,41 @@ function TalkingHead({ analyser, isPlaying }) {
       setTimeout(() => setEyeBlink(1), 150);
     }
 
-    if (leftEyeRef.current && rightEyeRef.current) {
-      leftEyeRef.current.scale.y = eyeBlink;
-      rightEyeRef.current.scale.y = eyeBlink;
+    // Apply eye blink to morph targets
+    if (scene) {
+      scene.traverse((child) => {
+        if (child.isMesh && child.morphTargetInfluences) {
+          const morphTargetNames = child.morphTargetDictionary;
+          if (morphTargetNames) {
+            if ('eyeBlinkLeft' in morphTargetNames) {
+              child.morphTargetInfluences[morphTargetNames['eyeBlinkLeft']] = 1 - eyeBlink;
+            }
+            if ('eyeBlinkRight' in morphTargetNames) {
+              child.morphTargetInfluences[morphTargetNames['eyeBlinkRight']] = 1 - eyeBlink;
+            }
+          }
+        }
+      });
     }
 
-    // Head movement
-    if (headRef.current) {
+    // Subtle head movement
+    if (gltfRef.current) {
       const time = state.clock.elapsedTime;
-      headRef.current.rotation.y = Math.sin(time * 0.3) * 0.05;
-      headRef.current.position.y = Math.sin(time * 0.5) * 0.02;
+      gltfRef.current.rotation.y = Math.sin(time * 0.3) * 0.05;
+      gltfRef.current.position.y = Math.sin(time * 0.5) * 0.02;
     }
   });
 
+  // Move avatar UP significantly to show head/face area for chatbot
   return (
-    <group ref={headRef} position={[0, 0, 0]}>
-      {/* Head */}
-      <mesh position={[0, 0, 0]}>
-        <sphereGeometry args={[1, 32, 32]} />
-        <meshStandardMaterial color="#FDBCB4" />
-      </mesh>
-
-      {/* Left Eye */}
-      <mesh ref={leftEyeRef} position={[-0.3, 0.15, 0.85]}>
-        <sphereGeometry args={[0.12, 16, 16]} />
-        <meshStandardMaterial color="white" />
-      </mesh>
-
-      {/* Right Eye */}
-      <mesh ref={rightEyeRef} position={[0.3, 0.15, 0.85]}>
-        <sphereGeometry args={[0.12, 16, 16]} />
-        <meshStandardMaterial color="white" />
-      </mesh>
-
-      {/* Left Pupil */}
-      <mesh position={[-0.3, 0.15, 0.95]}>
-        <sphereGeometry args={[0.06, 16, 16]} />
-        <meshStandardMaterial color="black" />
-      </mesh>
-
-      {/* Right Pupil */}
-      <mesh position={[0.3, 0.15, 0.95]}>
-        <sphereGeometry args={[0.06, 16, 16]} />
-        <meshStandardMaterial color="black" />
-      </mesh>
-
-      {/* Nose */}
-      <mesh position={[0, -0.05, 0.9]}>
-        <sphereGeometry args={[0.06, 16, 16]} />
-        <meshStandardMaterial color="#F5A97F" />
-      </mesh>
-
-      {/* Mouth */}
-      <mesh ref={mouthRef} position={[0, -0.25, 0.95]}>
-        <boxGeometry args={[0.4, 0.12, 0.04]} />
-        <meshStandardMaterial color="#CC0000" />
-      </mesh>
-
-      {/* Left Eyebrow */}
-      <mesh position={[-0.3, 0.35, 0.82]} rotation={[0, 0, -0.1]}>
-        <boxGeometry args={[0.25, 0.04, 0.02]} />
-        <meshStandardMaterial color="#8B4513" />
-      </mesh>
-
-      {/* Right Eyebrow */}
-      <mesh position={[0.3, 0.35, 0.82]} rotation={[0, 0, 0.1]}>
-        <boxGeometry args={[0.25, 0.04, 0.02]} />
-        <meshStandardMaterial color="#8B4513" />
-      </mesh>
+    <group ref={gltfRef} position={[0, 2.8, 0]} scale={[1.8, 1.8, 1.8]} rotation={[0, 0, 0]}>
+      <primitive object={scene} />
     </group>
   );
 }
+
+// Preload the model
+useGLTF.preload('https://models.readyplayer.me/68c6d8096e1393f19468b39e.glb');
 
 export default function Avatar({ audioRef, isPlaying, setIsPlaying }) {
   const analyserRef = useRef(null);
@@ -166,21 +146,24 @@ export default function Avatar({ audioRef, isPlaying, setIsPlaying }) {
   return (
     <div style={{ width: '100%', height: '100%' }}>
       <Canvas 
-        camera={{ position: [0, 0, 3], fov: 75 }}
+        camera={{ position: [0, 1.5, 2.2], fov: 28 }}
         style={{ width: '100%', height: '100%' }}
       >
         <ambientLight intensity={0.6} />
         <directionalLight position={[5, 5, 5]} intensity={0.8} />
         <pointLight position={[-5, -5, -5]} intensity={0.3} />
         
-        <TalkingHead analyser={analyserRef.current} isPlaying={isPlaying} />
+        <Suspense fallback={<mesh><boxGeometry /><meshBasicMaterial color="gray" /></mesh>}>
+          <ReadyPlayerMeAvatar analyser={analyserRef.current} isPlaying={isPlaying} />
+        </Suspense>
         
         <OrbitControls 
           enableZoom={true}
           enablePan={false}
           enableRotate={true}
-          maxDistance={6}
-          minDistance={1.5}
+          maxDistance={3.5}
+          minDistance={1.8}
+          target={[0, 2.8, 0]}
         />
       </Canvas>
     </div>
