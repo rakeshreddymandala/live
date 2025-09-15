@@ -7,9 +7,9 @@ import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 import { FXAAShader } from 'three/addons/shaders/FXAAShader.js';
-import { Analyser } from '../../design/analyser';
-import { fs as backdropFS, vs as backdropVS } from '../../design/backdrop-shader';
-import { vs as sphereVS } from '../../design/sphere-shader';
+import { Analyser } from '../design/analyser';
+import { fs as backdropFS, vs as backdropVS } from '../design/backdrop-shader';
+import { vs as sphereVS } from '../design/sphere-shader';
 
 interface VoiceReactiveVisualProps {
   className?: string;
