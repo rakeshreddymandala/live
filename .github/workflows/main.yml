@@ -1,0 +1,51 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  frontend-ci:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '20'
+
+    - name: Install dependencies
+      run: npm install
+
+    - name: Lint frontend
+      run: |
+        npm install -D eslint eslint-plugin-react eslint-plugin-react-hooks eslint-plugin-react-refresh
+        npx eslint .
+
+    - name: Build frontend
+      run: npm run build
+
+  backend-ci:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+
+    - name: Install dependencies
+      run: pip install -r backend/requirements.txt
+
+    - name: Lint backend
+      run: |
+        pip install flake8
+        flake8 backend/ --ignore=E501,E302,E305,W293,F401,W292,E261
