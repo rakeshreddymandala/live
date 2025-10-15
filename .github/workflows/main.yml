@@ -24,7 +24,7 @@ jobs:
 
     - name: Lint frontend
       run: |
-        npm install -D eslint eslint-plugin-react eslint-plugin-react-hooks eslint-plugin-react-refresh
+        npm install -D eslint eslint-plugin-react eslint-plugin-react-hooks eslint-plugin-react-refresh @typescript-eslint/parser @typescript-eslint/eslint-plugin
         npx eslint .
 
     - name: Build frontend

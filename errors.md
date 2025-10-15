@@ -1,6 +1,9 @@
 Run npm install -D eslint eslint-plugin-react eslint-plugin-react-hooks eslint-plugin-react-refresh
+  npm install -D eslint eslint-plugin-react eslint-plugin-react-hooks eslint-plugin-react-refresh
+  npx eslint .
+  shell: /usr/bin/bash -e {0}
 
-added 186 packages, and audited 435 packages in 7s
+added 186 packages, and audited 435 packages in 6s
 
 141 packages are looking for funding
   run `npm fund` for details
@@ -11,33 +14,26 @@ To address all issues (including breaking changes), run:
   npm audit fix --force
 
 Run `npm audit` for details.
+Warning: React version not specified in eslint-plugin-react settings. See https://github.com/jsx-eslint/eslint-plugin-react#configuration .
 
-Oops! Something went wrong! :(
+/home/runner/work/live/live/src/components/VoiceReactiveVisual.tsx
+  14:1  error  Parsing error: The keyword 'interface' is reserved
 
-ESLint: 9.37.0
+/home/runner/work/live/live/src/design/analyser.ts
+  9:11  error  Parsing error: Unexpected token analyser
 
+/home/runner/work/live/live/src/design/utils.ts
+  6:22  error  Parsing error: Unexpected token :
 
-A config object has a "plugins" key defined as an array of strings. It looks something like this:
+/home/runner/work/live/live/src/design/visual-3d.ts
+  27:1  error  Parsing error: Unexpected character '@'
 
-    {
-        "plugins": ["react-hooks"]
-    }
+/home/runner/work/live/live/src/services/api.ts
+  1:34  error  Parsing error: Unexpected token as
 
-Flat config requires "plugins" to be an object, like this:
+✖ 5 problems (5 errors, 0 warnings)
 
-    {
-        plugins: {
-            react-hooks: pluginObject
-        }
-    }
-
-Please see the following page for information on how to convert your config object into the correct format:
-https://eslint.org/docs/latest/use/configure/migration-guide#importing-plugins-and-custom-parsers
-
-If you're using a shareable config that you cannot rewrite in flat config format, then use the compatibility utility:
-https://eslint.org/docs/latest/use/configure/migration-guide#using-eslintrc-configs-in-flat-config
-
-Error: Process completed with exit code 2.
+Error: Process completed with exit code 1.
 
 the backend is completely fine but in frontend iam getting this error
 
